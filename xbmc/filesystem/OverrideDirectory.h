@@ -1,7 +1,6 @@
 #pragma once
-
 /*
- *      Copyright (C) 2005-2013 Team XBMC
+ *      Copyright (C) 2014 Team XBMC
  *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -20,22 +19,21 @@
  *
  */
 
-#include "DVDOverlayCodec.h"
+#include "filesystem/IDirectory.h"
 
-class CDVDOverlayText;
-
-class CDVDOverlayCodecCC : public CDVDOverlayCodec
+namespace XFILE
+{
+class COverrideDirectory : public IDirectory
 {
 public:
-  CDVDOverlayCodecCC();
-  virtual ~CDVDOverlayCodecCC();
-  virtual bool Open(CDVDStreamInfo &hints, CDVDCodecOptions &options);
-  virtual void Dispose();
-  virtual int Decode(DemuxPacket *pPacket);
-  virtual void Reset();
-  virtual void Flush();
-  virtual CDVDOverlay* GetOverlay();
+  COverrideDirectory();
+  virtual ~COverrideDirectory();
 
-private:
-  CDVDOverlayText* m_pCurrentOverlay;
+  virtual bool Create(const CURL& url);
+  virtual bool Exists(const CURL& url);
+  virtual bool Remove(const CURL& url);
+
+protected:
+  virtual std::string TranslatePath(const CURL &url) = 0;
 };
+}

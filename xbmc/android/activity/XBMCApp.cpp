@@ -116,6 +116,12 @@ CXBMCApp::~CXBMCApp()
 void CXBMCApp::onStart()
 {
   android_printf("%s: ", __PRETTY_FUNCTION__);
+
+  // non-aml boxes will ignore this intent broadcast.
+  // setup aml scalers to play video as is, unscaled.
+  CJNIIntent intent_aml_video_on = CJNIIntent("android.intent.action.REALVIDEO_ON");
+  sendBroadcast(intent_aml_video_on);
+
   if (!m_firstrun)
   {
     android_printf("%s: Already running, ignoring request to start", __PRETTY_FUNCTION__);
@@ -150,6 +156,10 @@ void CXBMCApp::onPause()
   SetSystemVolume(m_initialVolume);
 
   unregisterReceiver(*this);
+
+  // non-aml boxes will ignore this intent broadcast.
+  CJNIIntent intent_aml_video_off = CJNIIntent("android.intent.action.REALVIDEO_OFF");
+  sendBroadcast(intent_aml_video_off);
 }
 
 void CXBMCApp::onStop()
@@ -446,7 +456,7 @@ bool CXBMCApp::StartActivity(const string &package, const string &intent, const 
 
   newIntent.setPackage(package);
   startActivity(newIntent);
-  if (xbmc_jnienv()->ExceptionOccurred())
+  if (xbmc_jnienv()->ExceptionCheck())
   {
     CLog::Log(LOGERROR, "CXBMCApp::StartActivity - ExceptionOccurred launching %s", package.c_str());
     xbmc_jnienv()->ExceptionClear();

@@ -186,7 +186,7 @@ void CDVDPlayerAudio::OpenStream( CDVDStreamInfo &hints, CDVDAudioCodec* codec )
   m_synctype = SYNC_DISCON;
   m_setsynctype = SYNC_DISCON;
   if (CSettings::Get().GetBool("videoplayer.usedisplayasclock"))
-    m_setsynctype = CSettings::Get().GetInt("videoplayer.synctype");
+    m_setsynctype = SYNC_RESAMPLE;
   m_prevsynctype = -1;
 
   m_error = 0;
@@ -564,7 +564,7 @@ void CDVDPlayerAudio::Process()
     // Zero out the frame data if we are supposed to silence the audio
     if (m_silence)
     {
-      int size = audioframe.nb_frames * audioframe.framesize * audioframe.channel_count / audioframe.planes;
+      int size = audioframe.nb_frames * audioframe.framesize / audioframe.planes;
       for (unsigned int i=0; i<audioframe.planes; i++)
         memset(audioframe.data[i], 0, size);
     }

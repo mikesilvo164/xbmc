@@ -526,14 +526,14 @@ void CGUIMediaWindow::UpdateButtons()
   if (m_guiState.get())
   {
     // Update sorting controls
-    if (m_guiState->GetDisplaySortOrder() == SortOrderNone)
+    if (m_guiState->GetSortOrder() == SortOrderNone)
     {
       CONTROL_DISABLE(CONTROL_BTNSORTASC);
     }
     else
     {
       CONTROL_ENABLE(CONTROL_BTNSORTASC);
-      SET_CONTROL_SELECTED(GetID(), CONTROL_BTNSORTASC, m_guiState->GetDisplaySortOrder() != SortOrderAscending);
+      SET_CONTROL_SELECTED(GetID(), CONTROL_BTNSORTASC, m_guiState->GetSortOrder() != SortOrderAscending);
     }
 
     // Update list/thumb control
@@ -571,7 +571,7 @@ void CGUIMediaWindow::SortItems(CFileItemList &items)
   if (guiState.get())
   {
     SortDescription sorting = guiState->GetSortMethod();
-    sorting.sortOrder = guiState->GetDisplaySortOrder();
+    sorting.sortOrder = guiState->GetSortOrder();
     // If the sort method is "sort by playlist" and we have a specific
     // sort order available we can use the specified sort order to do the sorting
     // We do this as the new SortBy methods are a superset of the SORT_METHOD methods, thus
@@ -588,7 +588,7 @@ void CGUIMediaWindow::SortItems(CFileItemList &items)
 
         // if the sort order is descending, we need to switch the original sort order, as we assume
         // in CGUIViewState::AddPlaylistOrder that SortByPlaylistOrder is ascending.
-        if (guiState->GetDisplaySortOrder() == SortOrderDescending)
+        if (guiState->GetSortOrder() == SortOrderDescending)
           sorting.sortOrder = sorting.sortOrder == SortOrderDescending ? SortOrderAscending : SortOrderDescending;
       }
     }
@@ -630,7 +630,7 @@ void CGUIMediaWindow::FormatAndSort(CFileItemList &items)
     viewState->GetSortMethodLabelMasks(labelMasks);
     FormatItemLabels(items, labelMasks);
 
-    items.Sort(viewState->GetSortMethod().sortBy, viewState->GetDisplaySortOrder(), viewState->GetSortMethod().sortAttributes);
+    items.Sort(viewState->GetSortMethod().sortBy, viewState->GetSortOrder(), viewState->GetSortMethod().sortAttributes);
   }
 }
 
@@ -722,7 +722,7 @@ bool CGUIMediaWindow::GetDirectory(const std::string &strDirectory, CFileItemLis
 
 // \brief Set window to a specific directory
 // \param strDirectory The directory to be displayed in list/thumb control
-// This function calls OnPrepareFileItems() and OnFinalizeFileItems()
+// This function calls OnPrepareFileItems()
 bool CGUIMediaWindow::Update(const std::string &strDirectory, bool updateFilterPath /* = true */)
 {
   // TODO: OnInitWindow calls Update() before window path has been set properly.
@@ -838,9 +838,6 @@ bool CGUIMediaWindow::Update(const std::string &strDirectory, bool updateFilterP
   // Filter and group the items if necessary
   OnFilterItems(GetProperty("filter").asString());
 
-  // Ask the devived class if it wants to do custom list operations,
-  // eg. changing the label
-  OnFinalizeFileItems(*m_vecItems);
   UpdateButtons();
 
   strSelectedItem = m_history.GetSelectedItem(m_vecItems->GetPath());
@@ -906,14 +903,6 @@ void CGUIMediaWindow::OnCacheFileItems(CFileItemList &items)
   // Should these items be saved to the hdd
   if (items.CacheToDiscAlways() && !IsFiltered())
     items.Save(GetID());
-}
-
-// \brief This function will be called by Update() after the
-// labels of the fileitems are formatted. Override this function
-// to modify the fileitems. Eg. to modify the item label
-void CGUIMediaWindow::OnFinalizeFileItems(CFileItemList &items)
-{
-
 }
 
 // \brief With this function you can react on a users click in the list/thumb panel.
@@ -1472,7 +1461,13 @@ void CGUIMediaWindow::OnInitWindow()
   bool updateStartDirectory = (m_startDirectory == m_vecItems->GetPath());
   Refresh();
   if (updateStartDirectory)
+  {
+    // reset the start directory to the path of the items
     m_startDirectory = m_vecItems->GetPath();
+
+    // reset the history based on the path of the items
+    SetHistoryForPath(m_startDirectory);
+  }
 
   m_rootDir.SetAllowThreads(true);
 
